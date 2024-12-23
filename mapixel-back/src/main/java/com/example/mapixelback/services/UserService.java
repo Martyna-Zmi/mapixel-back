@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,20 +17,28 @@ public class UserService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
-    //private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    public User saveUser(User user) {
+    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
+    public User createUser(User user){
+        String password = user.getPassword();
         User userFromDb = findUserByEmail(user.getEmail());
-        //if(user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,40}$") && userFromDb == null){
-           // user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if(password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,40}$") && userFromDb==null){
+            String encodedPassword = encoder.encode(password);
+            user.setPassword(encodedPassword);
             return mongoTemplate.save(user);
-        //}
-       // return null;
-
+        }
+        return null;
     }
+
     public User findUserById(String id) {
         return mongoTemplate.findById(id, User.class);
     }
-
+    public User authorizeUser(String email, String password){
+        User userFound = findUserByEmail(email);
+        if(userFound != null && encoder.matches(password, userFound.getPassword())){
+            return userFound;
+        }
+        return null;
+    }
     public User findUserByEmail(String email){
         Query query = new Query(Criteria.where("email").is(email));
         return mongoTemplate.findOne(query, User.class);

@@ -1,15 +1,20 @@
 package com.example.mapixelback.controllers;
 
 import com.example.mapixelback.dto.MapSummaryDto;
+import com.example.mapixelback.dto.TokenResponse;
+import com.example.mapixelback.dto.UserAuth;
 import com.example.mapixelback.dto.UserSummaryWithMapsDto;
+import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.User;
 import com.example.mapixelback.services.MapService;
 import com.example.mapixelback.services.UserService;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -20,13 +25,39 @@ public class UserController {
     private UserService userService;
     @Autowired
     private MapService mapService;
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User userCreated = userService.saveUser(user);
-        if(userCreated!=null){
-            return new ResponseEntity<>(userCreated, HttpStatus.CREATED);
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @PostMapping("/authorize")
+    public ResponseEntity<TokenResponse> login(@RequestBody UserAuth userAuth) {
+        User user = userService.authorizeUser(userAuth.getEmail(), userAuth.getPassword());
+        if (user!=null) {
+            final UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+            TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
+            return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+    @PostMapping("/create")
+    public ResponseEntity<TokenResponse> createUser(@RequestBody User user){
+        User userCreated = userService.createUser(user);
+        if(userCreated == null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        final UserDetails userDetails = new org.springframework.security.core.userdetails.User(userCreated.getEmail(), userCreated.getPassword(), new ArrayList<>());
+        TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
+        return new ResponseEntity<>(tokenResponse ,HttpStatus.CREATED);
+    }
+    @GetMapping("/emailfree/{email}")
+    public ResponseEntity<String> isEmailInUse(@PathVariable String email){
+        User user = userService.findUserByEmail(email);
+        if(user==null){
+            String jsonString = new JSONObject().put("inuse", false).toString();
+            return new ResponseEntity<>(jsonString, HttpStatus.OK);
+        }
+        String jsonString = new JSONObject().put("inuse", true).toString();
+        return new ResponseEntity<>(jsonString,HttpStatus.OK);
     }
     @GetMapping("/{id}/with-maps")
     public ResponseEntity<UserSummaryWithMapsDto> getUserWithMaps(@PathVariable String id){
