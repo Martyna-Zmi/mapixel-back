@@ -4,12 +4,15 @@ import com.example.mapixelback.dto.MapSummaryDto;
 import com.example.mapixelback.dto.TokenResponse;
 import com.example.mapixelback.dto.UserAuth;
 import com.example.mapixelback.dto.UserSummaryWithMapsDto;
+import com.example.mapixelback.exception.InvalidDataException;
+import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.User;
 import com.example.mapixelback.services.MapService;
 import com.example.mapixelback.services.UserService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,19 +39,21 @@ public class UserController {
             TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
             return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new InvalidDataException("Invalid credentials");
         }
     }
     @PostMapping("/create")
     public ResponseEntity<TokenResponse> createUser(@RequestBody User user){
         User userCreated = userService.createUser(user);
         if(userCreated == null){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new InvalidDataException("Invalid registration data");
         }
         final UserDetails userDetails = new org.springframework.security.core.userdetails.User(userCreated.getEmail(), userCreated.getPassword(), new ArrayList<>());
         TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
         return new ResponseEntity<>(tokenResponse ,HttpStatus.CREATED);
     }
+    @PostMapping("/logout")
+
     @GetMapping("/emailfree/{email}")
     public ResponseEntity<String> isEmailInUse(@PathVariable String email){
         User user = userService.findUserByEmail(email);
@@ -60,19 +65,23 @@ public class UserController {
         return new ResponseEntity<>(jsonString,HttpStatus.OK);
     }
     @GetMapping("/{id}/with-maps")
-    public ResponseEntity<UserSummaryWithMapsDto> getUserWithMaps(@PathVariable String id){
+    public ResponseEntity<UserSummaryWithMapsDto> getUserWithMaps(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+
         User foundUser = userService.findUserById(id);
         if(foundUser != null){
-            UserSummaryWithMapsDto userDto = new UserSummaryWithMapsDto();
-            userDto.setId(foundUser.getId());
-            userDto.setUsername(foundUser.getUsername());
-            userDto.setEmail(foundUser.getEmail());
-            List<String> foundMapsIds = foundUser.getMaps();
-            List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(entry -> mapService.mapToSummaryDto(entry)).toList();
-            userDto.setMaps(foundMapsSummaries);
-            return new ResponseEntity<>(userDto, HttpStatus.OK);
+            if(userService.verifyUserAccess(token, foundUser) || userService.verifyAdminAccess(token)){
+                UserSummaryWithMapsDto userDto = new UserSummaryWithMapsDto();
+                userDto.setId(foundUser.getId());
+                userDto.setUsername(foundUser.getUsername());
+                userDto.setEmail(foundUser.getEmail());
+                List<String> foundMapsIds = foundUser.getMaps();
+                List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(entry -> mapService.mapToSummaryDto(entry)).toList();
+                userDto.setMaps(foundMapsSummaries);
+                return new ResponseEntity<>(userDto, HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        throw new ResourceNotFoundException("User with this id doesn't exist");
     }
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String id) {
@@ -80,7 +89,7 @@ public class UserController {
         if(userFound!=null){
             return new ResponseEntity<>(userFound, HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        throw new ResourceNotFoundException("User with this id doesn't exist");
     }
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {

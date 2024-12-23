@@ -1,5 +1,6 @@
 package com.example.mapixelback.controllers;
 
+import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.model.Field;
 import com.example.mapixelback.services.FieldService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class FieldController {
         if(fieldFound != null){
             return new ResponseEntity<>(fieldFound, HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        throw new ResourceNotFoundException("Field with the following id doesn't exist");
     }
     @GetMapping
     public ResponseEntity<List<Field>> getAllFields() {

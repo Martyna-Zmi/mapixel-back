@@ -15,9 +15,9 @@ public class Map {
     @Id
     private String id;
     private String name;
-    private String userId; //reference to user
+    private String userId;
     private int dimensionX;
     private int dimensionY;
-    private List<String> fields; //list of references to objects
+    private List<String> fields;
 
 }

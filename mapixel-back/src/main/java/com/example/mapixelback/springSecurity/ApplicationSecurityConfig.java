@@ -27,11 +27,12 @@ public class ApplicationSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers("/users/authorize").permitAll()
-                                .requestMatchers("/users/create").permitAll()
-                                .requestMatchers("/users/emailfree/*").permitAll()
+                        requests//.requestMatchers("/users/authorize").permitAll()
+                                //.requestMatchers("/users/create").permitAll()
+                                //.requestMatchers("/users/emailfree/*").permitAll()
                                 .anyRequest()
-                                .authenticated()
+                                .permitAll()
+                                //.authenticated()
                 )
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.sameOrigin())

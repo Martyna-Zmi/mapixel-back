@@ -17,5 +17,6 @@ public class User {
     private String username;
     private String email;
     private String password;
-    private List<String> maps; //references to maps of the user
+    private Boolean isAdmin;
+    private List<String> maps;
 }
