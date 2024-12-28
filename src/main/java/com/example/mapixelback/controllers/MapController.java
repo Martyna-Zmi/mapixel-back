@@ -82,28 +82,17 @@ public class MapController {
         }
         throw new ResourceNotFoundException("Map with this id doesn't exist");
     }
-//    @PutMapping
-//    public ResponseEntity<Map> updateMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
-//        if(map.getUserId()!=null){
-//            User owner = userService.findUserById(map.getUserId());
-//            if(owner!=null && userService.verifyUserAccess(token, owner)){
-//                Map mapFound = mapService.saveMap(map);
-//                if(mapFound != null){
-//                    return new ResponseEntity<>(mapFound, HttpStatus.CREATED);
-//                }
-//            }
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
-//        throw new InvalidDataException("Invalid data for creating a map");
-//    }
     @PutMapping
-    public ResponseEntity<Map> updateMap(@RequestBody Map map){
+    public ResponseEntity<Map> updateMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
         if(map.getUserId()!=null){
             User owner = userService.findUserById(map.getUserId());
-            Map mapFound = mapService.saveMap(map);
-            if(mapFound != null){
-                return new ResponseEntity<>(mapFound, HttpStatus.CREATED);
+            if(owner!=null && userService.verifyUserAccess(token, owner)){
+                Map mapFound = mapService.saveMap(map);
+                if(mapFound != null){
+                    return new ResponseEntity<>(mapFound, HttpStatus.CREATED);
+                }
             }
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         throw new InvalidDataException("Invalid data for creating a map");
     }
