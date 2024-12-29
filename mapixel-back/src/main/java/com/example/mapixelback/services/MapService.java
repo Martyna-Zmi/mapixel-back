@@ -52,6 +52,7 @@ public class MapService {
             map.setFields(filledFields);
         }
         else if(map.getFields().size() != map.getDimensionX() * map.getDimensionY()){ //for updating maps
+            System.out.println("Incorrect number of fields");
             throw new InvalidDataException("Incorrect number of fields");
         }
         Map savedMap = mongoTemplate.save(map);

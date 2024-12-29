@@ -1,7 +1,6 @@
 package com.example.mapixelback.services;
 
 import com.example.mapixelback.exception.InvalidDataException;
-import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;

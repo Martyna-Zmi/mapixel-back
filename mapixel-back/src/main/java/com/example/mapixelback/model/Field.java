@@ -12,5 +12,5 @@ public class Field {
     private String id;
     private String name;
     private String imgSrc;
-    private String background;
+    private String category;
 }

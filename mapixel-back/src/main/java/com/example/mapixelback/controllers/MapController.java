@@ -74,6 +74,7 @@ public class MapController {
             MapFullDto mapDto = new MapFullDto();
             mapDto.setId(foundMap.getId());
             mapDto.setName(foundMap.getName());
+            mapDto.setUserId(foundMap.getUserId());
             mapDto.setDimensionX(foundMap.getDimensionX());
             mapDto.setDimensionY(foundMap.getDimensionY());
             mapDto.setFields(mappedFields);

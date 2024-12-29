@@ -52,8 +52,6 @@ public class UserController {
         TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
         return new ResponseEntity<>(tokenResponse ,HttpStatus.CREATED);
     }
-    @PostMapping("/logout")
-
     @GetMapping("/emailfree/{email}")
     public ResponseEntity<String> isEmailInUse(@PathVariable String email){
         User user = userService.findUserByEmail(email);
