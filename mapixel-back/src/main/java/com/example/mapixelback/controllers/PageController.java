@@ -5,6 +5,8 @@ import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.User;
 import com.example.mapixelback.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Controller;
@@ -18,8 +20,10 @@ public class PageController {
     private UserService userService;
     @Autowired
     private JwtUtil jwtUtil;
+    private static final Logger logger = LoggerFactory.getLogger(PageController.class);
     @GetMapping("/main-page")
     public String index(Model model, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        logger.info("incoming GET request at /main-page");
         User user = userService.findUserByEmail(jwtUtil.extractUsernameFromToken(token.replace("Bearer ", "")));
         if(user!=null){
             model.addAttribute("username", user.getUsername());

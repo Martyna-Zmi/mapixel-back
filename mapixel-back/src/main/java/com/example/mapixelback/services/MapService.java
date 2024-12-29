@@ -4,6 +4,8 @@ import com.example.mapixelback.dto.MapSummaryDto;
 import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -22,6 +24,7 @@ public class MapService {
     private UserService userService;
     @Autowired
     private FieldService fieldService;
+
     public Map saveMap(Map map) {
         boolean isUpdating = map.getId() != null;
         if(!isUpdating && findMapsByUserId(map.getUserId()).size()==5){

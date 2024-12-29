@@ -47,13 +47,18 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         String token = request.getHeader("Authorization");
         UsernamePasswordAuthenticationToken authentication = null;
         if (Objects.nonNull(token)) {
-            String username = jwtUtil.extractUsernameFromToken(token.replace("Bearer ", ""));
-            User user = userService.findUserByEmail(username);
-            if (Objects.nonNull(username)) {
-                UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());//userDetailsService.loadUserByUsername(username);
-                if (jwtUtil.validateToken(token.replace("Bearer ", ""), userDetails)) {
-                    authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            try{
+                String username = jwtUtil.extractUsernameFromToken(token.replace("Bearer ", ""));
+                User user = userService.findUserByEmail(username);
+                if (Objects.nonNull(username)) {
+                    UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());//userDetailsService.loadUserByUsername(username);
+                    if (jwtUtil.validateToken(token.replace("Bearer ", ""), userDetails)) {
+                        authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    }
                 }
+            }
+            catch (Exception e){
+                return authentication;
             }
         }
         return authentication;

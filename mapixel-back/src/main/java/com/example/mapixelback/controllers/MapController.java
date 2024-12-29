@@ -9,6 +9,8 @@ import com.example.mapixelback.model.User;
 import com.example.mapixelback.services.FieldService;
 import com.example.mapixelback.services.MapService;
 import com.example.mapixelback.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,8 +29,10 @@ public class MapController {
     private FieldService fieldService;
     @Autowired
     private UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(MapController.class);
     @PostMapping
     public ResponseEntity<Map> createMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        logger.info("incoming POST request at /maps");
         User owner = userService.findUserById(map.getUserId());
         if(owner!=null && userService.verifyUserAccess(token, owner)){
             Map mapCreated = mapService.saveMap(map);
@@ -41,6 +45,7 @@ public class MapController {
     }
     @GetMapping("/{id}")
     public ResponseEntity<Map> getMapById(@PathVariable String id) {
+        logger.info("incoming GET request at /maps/{id}");
         Map mapFound = mapService.findMapById(id);
         if(mapFound != null){
             return new ResponseEntity<>(mapFound, HttpStatus.OK);
@@ -49,10 +54,12 @@ public class MapController {
     }
     @GetMapping
     public ResponseEntity<List<Map>> getAllMaps() {
+        logger.info("incoming GET request at /maps");
         return new ResponseEntity<>(mapService.findAllMaps(), HttpStatus.OK);
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMapById(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        logger.info("incoming DELETE request at /maps/{id}");
         Map foundMap = mapService.findMapById(id);
         if(foundMap!=null && userService.findUserById(foundMap.getUserId())!=null) {
             User owner = userService.findUserById(foundMap.getUserId());
@@ -68,6 +75,7 @@ public class MapController {
     }
     @GetMapping("/{id}/with-fields")
     public ResponseEntity<MapFullDto> getMapFullInfo(@PathVariable String id){
+        logger.info("incoming GET request at /maps/{id}/with-fields");
         Map foundMap = mapService.findMapById(id);
         if(foundMap != null){
             List<Field> mappedFields = foundMap.getFields().stream().map(elementId -> fieldService.findFieldById(elementId)).toList();
@@ -84,6 +92,7 @@ public class MapController {
     }
     @PutMapping
     public ResponseEntity<Map> updateMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        logger.info("incoming PUT request at /maps");
         if(map.getUserId()!=null){
             User owner = userService.findUserById(map.getUserId());
             if(owner!=null && userService.verifyUserAccess(token, owner)){

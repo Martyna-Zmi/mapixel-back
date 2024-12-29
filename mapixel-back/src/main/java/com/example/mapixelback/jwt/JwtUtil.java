@@ -1,8 +1,11 @@
 package com.example.mapixelback.jwt;
 
+import com.example.mapixelback.exception.InvalidDataException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -19,6 +22,7 @@ public class JwtUtil {
     private String secret;
     @Value("${jwt.token.lifespan}")
     private long tokenLifeSpan;
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
@@ -39,7 +43,13 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+        try{
+            return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+        }
+        catch (Exception exception){
+            logger.warn("Przedstawiono przeterminowany lub zfałszowany token");
+            throw new InvalidDataException("Przedstawiono przeterminowany lub zfałszowany token");
+        }
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {

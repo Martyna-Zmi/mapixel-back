@@ -1,5 +1,6 @@
 package com.example.mapixelback.jwt;
 
+import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -7,6 +8,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private AuthenticationManager authenticationManager;
     private JwtUtil jwtUtil;
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -29,7 +33,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(),
                     user.getPassword(), new ArrayList<>()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.warn("Próba nieodpowiedniego dostępu zablokowana");
+            throw new InvalidDataException("Niepoprawny token!");
         }
     }
 

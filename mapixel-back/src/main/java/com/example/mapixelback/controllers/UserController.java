@@ -11,6 +11,8 @@ import com.example.mapixelback.model.User;
 import com.example.mapixelback.services.MapService;
 import com.example.mapixelback.services.UserService;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,9 +32,10 @@ public class UserController {
     private MapService mapService;
     @Autowired
     private JwtUtil jwtUtil;
-
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     @PostMapping("/authorize")
     public ResponseEntity<TokenResponse> login(@RequestBody UserAuth userAuth) {
+        logger.info("incoming POST request at /users/authorize");
         User user = userService.authorizeUser(userAuth.getEmail(), userAuth.getPassword());
         if (user!=null) {
             final UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
@@ -44,6 +47,7 @@ public class UserController {
     }
     @PostMapping("/create")
     public ResponseEntity<TokenResponse> createUser(@RequestBody User user){
+        logger.info("incoming POST request at /users/create");
         User userCreated = userService.createUser(user);
         if(userCreated == null){
             throw new InvalidDataException("Invalid registration data");
@@ -54,6 +58,7 @@ public class UserController {
     }
     @GetMapping("/emailfree/{email}")
     public ResponseEntity<String> isEmailInUse(@PathVariable String email){
+        logger.info("incoming GET request at /users/emailfree/{email}");
         User user = userService.findUserByEmail(email);
         if(user==null){
             String jsonString = new JSONObject().put("inuse", false).toString();
@@ -64,7 +69,7 @@ public class UserController {
     }
     @GetMapping("/{id}/with-maps")
     public ResponseEntity<UserSummaryWithMapsDto> getUserWithMaps(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
-
+        logger.info("incoming GET request at /users/{id}/with-maps");
         User foundUser = userService.findUserById(id);
         if(foundUser != null){
             if(userService.verifyUserAccess(token, foundUser) || userService.verifyAdminAccess(token)){
@@ -83,6 +88,7 @@ public class UserController {
     }
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String id) {
+        logger.info("incoming GET request at /users/{id}");
         User userFound = userService.findUserById(id);
         if(userFound!=null){
             return new ResponseEntity<>(userFound, HttpStatus.OK);
@@ -91,10 +97,12 @@ public class UserController {
     }
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
+        logger.info("incoming GET request at /users");
         return new ResponseEntity<>(userService.findAllUsers(), HttpStatus.OK);
     }
     @GetMapping("/username/{username}")
     public ResponseEntity<List<User>> getUsersByUsername(@PathVariable String username) {
+        logger.info("incoming GET request at /users/username/{username}");
         return new ResponseEntity<>(userService.findUsersByUsername(username), HttpStatus.OK);
     }
 }
