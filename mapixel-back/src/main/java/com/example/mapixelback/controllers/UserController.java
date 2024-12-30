@@ -20,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -56,8 +58,16 @@ public class UserController {
         TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
         return new ResponseEntity<>(tokenResponse ,HttpStatus.CREATED);
     }
-    @GetMapping("/emailfree/{email}")
-    public ResponseEntity<String> isEmailInUse(@PathVariable String email){
+    @GetMapping("/extract")
+    public ResponseEntity<Map<String, String>> userIdFromToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        User user = userService.findUserByEmail(jwtUtil.extractUsernameFromToken(token.replace("Bearer ", "")));
+        if(user==null) throw new InvalidDataException("Invalid token");
+        Map<String, String> response = new HashMap<>();
+        response.put("userId", user.getId());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/emailfree")
+    public ResponseEntity<String> isEmailInUse(@RequestBody String email){
         logger.info("incoming GET request at /users/emailfree/{email}");
         User user = userService.findUserByEmail(email);
         if(user==null){
