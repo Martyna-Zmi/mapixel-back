@@ -6,8 +6,32 @@
 <body>
 <div id="thymeleaf-content">
     <p>Witaj, <span th:text="${username}">nazwa</span>!</p>
-    <p th:if="${hasMaps}">Chcesz tworzyć jeszcze lepsze mapy? Mamy dla Ciebie kilka porad!</p>
-    <p th:unless="${hasMaps}">Wygląda na to, że nie masz jeszcze ani jednej mapy. Mamy dla ciebie kilka poradników na start!</p>
+    <div th:if="${hasMaps}">
+        <h3>Chcesz tworzyć jeszcze lepsze mapy? Mamy dla Ciebie kilka porad!</h3>
+        <div class="tips">
+            <p>Upewnij się, że jeżeli na twojej mapie znajdują się punkty startowe dla dwóch drużyn,
+            dzięki czemu każda z nich ma równe szanse. Zapewnij im podobny dostęp do zasobów, zwierząt oraz przeszkody o podobnym poziomie trudności.
+            Sprawi to, że rozgrywka będzie bardziej wyrównana i równie przyjemna (lub wymagająca) dla każdego z graczy!</p>
+        </div>
+        <div class="tips">
+            <p>Wypróbuj różne szablony początkowe. Dzięki temu Twoje mapy będą bardziej różnorodne!</p>
+        </div>
+    </div>
+    <div th:unless="${hasMaps}">
+        <h3>Wygląda na to, że nie masz jeszcze ani jednej mapy. Mamy dla ciebie kilka poradników na start!</h3>
+        <div class="tips">
+            <p>Na sam początej najlepiej stwórz małą lub średnią mapę. Przy większych mapach trudniej jest nauczyć się dobrego
+            gospodarowania przestrzenią, a w dodatku ich rozmiary mogą być przytłaczające</p>
+        </div>
+        <div class="tips">
+            <p>Nie bój się popełniać błędów! Masz do dostępu narzędzie umożliwiające cofanie zmian, jeżeli coś nie
+            pójdzie po twojej myśli</p>
+        </div>
+        <div class="tips">
+            <p>Zacznij od mapy dla jednego zespołu (taka, w której jest tylko jeden spawn). Ponownie chodzi o naukę
+            dobrego gospodarowania przestrzenią</p>
+        </div>
+    </div>
 
 </div>
 </body>

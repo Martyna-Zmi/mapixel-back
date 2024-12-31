@@ -1,5 +1,7 @@
 package com.example.mapixelback.services;
 
+import com.example.mapixelback.dto.DtoMapper;
+import com.example.mapixelback.dto.UserSummaryWithMapsDto;
 import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.Map;
@@ -15,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -25,6 +28,8 @@ public class UserService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private JwtUtil jwtUtil;
+    private final DtoMapper dtoMapper = new DtoMapper();
+
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
     public User createUser(User user){
         User userFromDb = findUserByEmail(user.getEmail());
@@ -48,7 +53,7 @@ public class UserService {
     }
     public void updateUserMaps(User user, Map savedMap){
         List<String> updatedMapList = user.getMaps();
-        updatedMapList.add(savedMap.getUserId());
+        updatedMapList.add(savedMap.getId());
         user.setMaps(updatedMapList);
         mongoTemplate.save(user);
     }
@@ -66,11 +71,25 @@ public class UserService {
         Query query = new Query(Criteria.where("email").is(email));
         return mongoTemplate.findOne(query, User.class);
     }
-    public List<User> findAllUsers() {
-        return mongoTemplate.findAll(User.class);
-    }
+    public java.util.Map<String, Object> findAllUsers(String token, int page, int size) {
+        if(!verifyAdminAccess(token)){
+            return null;
+        }
+        Query query = new Query();
+        long totalUsers = mongoTemplate.count(query, User.class);
+        query.skip((long) (page - 1) * size).limit(size);
+
+        List<User> users = mongoTemplate.find(query, User.class);
+        java.util.Map<String, Object> response = new HashMap<>();
+        response.put("content", users);
+        response.put("totalElements", totalUsers);
+        response.put("totalPages", (int) Math.ceil((double) totalUsers / size));
+        response.put("currentPage", page);
+
+        return response;
+}
     public List<User> findUsersByUsername(String username) {
-        Query query = new Query(Criteria.where("username").is(username));
+        Query query = new Query(Criteria.where("username").regex(".*" + username + ".*", "i"));
         return mongoTemplate.find(query, User.class);
     }
     public boolean verifyAdminAccess(String token){
@@ -83,4 +102,5 @@ public class UserService {
         User userFromDb = findUserByEmail(emailFromToken);
         return (userFromDb != null && userFromDb.getEmail().equals(userToVerify.getEmail()));
     }
+
 }

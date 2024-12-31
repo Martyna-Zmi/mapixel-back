@@ -1,9 +1,6 @@
 package com.example.mapixelback.controllers;
 
-import com.example.mapixelback.dto.MapSummaryDto;
-import com.example.mapixelback.dto.TokenResponse;
-import com.example.mapixelback.dto.UserAuth;
-import com.example.mapixelback.dto.UserSummaryWithMapsDto;
+import com.example.mapixelback.dto.*;
 import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
@@ -32,6 +29,7 @@ public class UserController {
     private UserService userService;
     @Autowired
     private MapService mapService;
+    private final DtoMapper dtoMapper = new DtoMapper();
     @Autowired
     private JwtUtil jwtUtil;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -88,7 +86,7 @@ public class UserController {
                 userDto.setUsername(foundUser.getUsername());
                 userDto.setEmail(foundUser.getEmail());
                 List<String> foundMapsIds = foundUser.getMaps();
-                List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(entry -> mapService.mapToSummaryDto(entry)).toList();
+                List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(mapService::mapToSummaryDto).toList();
                 userDto.setMaps(foundMapsSummaries);
                 return new ResponseEntity<>(userDto, HttpStatus.OK);
             }
@@ -106,9 +104,14 @@ public class UserController {
         throw new ResourceNotFoundException("User with this id doesn't exist");
     }
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        logger.info("incoming GET request at /users");
-        return new ResponseEntity<>(userService.findAllUsers(), HttpStatus.OK);
+    public ResponseEntity<Map<String, Object>> getAllUsers(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("Incoming GET request at /users with page={} and size={}", page, size);
+        Map<String, Object> response = userService.findAllUsers(token, page, size);
+        if (response == null) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @GetMapping("/username/{username}")
     public ResponseEntity<List<User>> getUsersByUsername(@PathVariable String username) {

@@ -4,8 +4,6 @@ import com.example.mapixelback.dto.MapSummaryDto;
 import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -27,9 +25,6 @@ public class MapService {
 
     public Map saveMap(Map map) {
         boolean isUpdating = map.getId() != null;
-        if(!isUpdating && findMapsByUserId(map.getUserId()).size()==5){
-            throw new InvalidDataException("User has reached the limit of maps (5 maps per account)");
-        }
         if(isUpdating && findMapById(map.getId())==null){
             throw new InvalidDataException("Map with this id doesn't exist");
         }
@@ -73,11 +68,17 @@ public class MapService {
     public boolean deleteMapById(String id) {
         Map mapFound = findMapById(id);
         if(mapFound != null){
-            Query query = new Query(Criteria.where("id").is(id));
-            mongoTemplate.remove(query, Map.class);
-            return true;
+            User owner = userService.findUserById(mapFound.getUserId());
+            if(owner != null){
+                owner.getMaps().remove(mapFound.getId());
+                mongoTemplate.save(owner);
+                Query query = new Query(Criteria.where("id").is(id));
+                mongoTemplate.remove(query, Map.class);
+                return true;
+            }
+            return false;
         }
-        else return false;
+        return false;
     }
     public List<Map> findMapsByUserId(String userId) {
         Query query = new Query(Criteria.where("userId").is(userId));
