@@ -105,4 +105,12 @@ public class MapController {
         }
         throw new InvalidDataException("Invalid data for creating a map");
     }
+    @GetMapping("/user/{id}")
+    public ResponseEntity<List<Map>> getMapsByUserId(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        if (userService.verifyUserAccess(token, userService.findUserById(id)) || userService.verifyAdminAccess(token)) {
+            List<Map> mapsFound = mapService.findMapsByUserId(id);
+            return new ResponseEntity<>(mapsFound, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
 }
