@@ -1,7 +1,7 @@
 package com.example.mapixelback.services;
 
-import com.example.mapixelback.dto.MapSummaryDto;
 import com.example.mapixelback.exception.InvalidDataException;
+import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +31,8 @@ public class MapService {
         if(map.getName()== null || map.getName().length()<4 || map.getName().length()>20){
             throw new InvalidDataException("Invalid map name");
         }
+        if(map.getUserId()==null) throw new InvalidDataException("Please provide user id");
         User userFromDb = userService.findUserById(map.getUserId());
-        if(userFromDb == null){
-            throw new InvalidDataException("Cannot create map for an unexisting user");
-        }
         if(map.getDimensionY()>20 || map.getDimensionY()<10 || map.getDimensionX()>20 || map.getDimensionX()<10){
             throw new InvalidDataException("Map dimensions can only be from 10 to 20 tiles each");
         }
@@ -49,46 +47,37 @@ public class MapService {
             }
             map.setFields(filledFields);
         }
-        else if(map.getFields().size() != map.getDimensionX() * map.getDimensionY()){ //for updating maps
+        else if(map.getFields().size() != map.getDimensionX() * map.getDimensionY()){
             System.out.println("Incorrect number of fields");
             throw new InvalidDataException("Incorrect number of fields");
         }
         Map savedMap = mongoTemplate.save(map);
-        if(!isUpdating){ //if creating a map, add its id to the corresponding user in db
-            userService.updateUserMaps(userFromDb, savedMap);
+        if(!isUpdating){
+            userService.updateUserMaps(userFromDb, savedMap); //add relation to user
         }
         return savedMap;
     }
     public Map findMapById(String id) {
-        return mongoTemplate.findById(id, Map.class);
+        Map mapFound = mongoTemplate.findById(id, Map.class);
+        if(mapFound == null) throw new ResourceNotFoundException("Map with this id doesn't exist");
+        return mapFound;
     }
     public List<Map> findAllMaps() {
         return mongoTemplate.findAll(Map.class);
     }
     public boolean deleteMapById(String id) {
         Map mapFound = findMapById(id);
-        if(mapFound != null){
-            User owner = userService.findUserById(mapFound.getUserId());
-            if(owner != null){
-                owner.getMaps().remove(mapFound.getId());
-                mongoTemplate.save(owner);
-                Query query = new Query(Criteria.where("id").is(id));
-                mongoTemplate.remove(query, Map.class);
-                return true;
-            }
-            return false;
-        }
-        return false;
+        User owner = userService.findUserById(mapFound.getUserId());
+        owner.getMaps().remove(mapFound.getId());
+
+        mongoTemplate.save(owner);
+        Query query = new Query(Criteria.where("id").is(id));
+        mongoTemplate.remove(query, Map.class);
+
+        return true;
     }
     public List<Map> findMapsByUserId(String userId) {
         Query query = new Query(Criteria.where("userId").is(userId));
         return mongoTemplate.find(query, Map.class);
-    }
-    public MapSummaryDto mapToSummaryDto(String id){
-        Map mapFound = findMapById(id);
-        if(mapFound != null){
-            return new MapSummaryDto(mapFound.getId(), mapFound.getName(), mapFound.getDimensionX(), mapFound.getDimensionY());
-        }
-        return null;
     }
 }

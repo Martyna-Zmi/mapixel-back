@@ -1,7 +1,6 @@
 package com.example.mapixelback.controllers;
 
 import com.example.mapixelback.dto.*;
-import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.User;
@@ -37,29 +36,25 @@ public class UserController {
     public ResponseEntity<TokenResponse> login(@RequestBody UserAuth userAuth) {
         logger.info("incoming POST request at /users/authorize");
         User user = userService.authorizeUser(userAuth.getEmail(), userAuth.getPassword());
-        if (user!=null) {
-            final UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
-            TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
-            return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
-        } else {
-            throw new InvalidDataException("Invalid credentials");
-        }
+
+        final UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+        TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
+
+        return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
     }
     @PostMapping("/create")
     public ResponseEntity<TokenResponse> createUser(@RequestBody User user){
         logger.info("incoming POST request at /users/create");
         User userCreated = userService.createUser(user);
-        if(userCreated == null){
-            throw new InvalidDataException("Invalid registration data");
-        }
+
         final UserDetails userDetails = new org.springframework.security.core.userdetails.User(userCreated.getEmail(), userCreated.getPassword(), new ArrayList<>());
         TokenResponse tokenResponse = new TokenResponse(jwtUtil.generateToken(userDetails));
-        return new ResponseEntity<>(tokenResponse ,HttpStatus.CREATED);
+
+        return new ResponseEntity<>(tokenResponse, HttpStatus.CREATED);
     }
     @GetMapping("/extract")
     public ResponseEntity<Map<String, String>> userIdFromToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
         User user = userService.findUserByEmail(jwtUtil.extractUsernameFromToken(token.replace("Bearer ", "")));
-        if(user==null) throw new InvalidDataException("Invalid token");
         Map<String, String> response = new HashMap<>();
         response.put("userId", user.getId());
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -82,11 +77,14 @@ public class UserController {
         if(foundUser != null){
             if(userService.verifyUserAccess(token, foundUser) || userService.verifyAdminAccess(token)){
                 UserSummaryWithMapsDto userDto = new UserSummaryWithMapsDto();
+
                 userDto.setId(foundUser.getId());
                 userDto.setUsername(foundUser.getUsername());
                 userDto.setEmail(foundUser.getEmail());
+
                 List<String> foundMapsIds = foundUser.getMaps();
-                List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(mapService::mapToSummaryDto).toList();
+                List<MapSummaryDto> foundMapsSummaries = foundMapsIds.stream().map(mapId -> dtoMapper.mapToSummaryDto(mapService.findMapById(mapId))).toList();
+
                 userDto.setMaps(foundMapsSummaries);
                 return new ResponseEntity<>(userDto, HttpStatus.OK);
             }

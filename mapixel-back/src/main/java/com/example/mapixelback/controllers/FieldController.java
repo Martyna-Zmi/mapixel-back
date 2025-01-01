@@ -1,6 +1,5 @@
 package com.example.mapixelback.controllers;
 
-import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.model.Field;
 import com.example.mapixelback.services.FieldService;
 import com.example.mapixelback.services.UserService;
@@ -36,10 +35,8 @@ public class FieldController {
     public ResponseEntity<Field> getFieldById(@PathVariable String id) {
         logger.info("incoming GET request at /fields/{id}");
         Field fieldFound = fieldService.findFieldById(id);
-        if(fieldFound != null){
-            return new ResponseEntity<>(fieldFound, HttpStatus.OK);
-        }
-        throw new ResourceNotFoundException("Field with the following id doesn't exist");
+        return new ResponseEntity<>(fieldFound, HttpStatus.OK);
+
     }
     @GetMapping
     public ResponseEntity<List<Field>> getAllFields() {

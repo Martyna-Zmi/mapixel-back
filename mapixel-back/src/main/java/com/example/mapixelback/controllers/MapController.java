@@ -1,8 +1,8 @@
 package com.example.mapixelback.controllers;
 
+import com.example.mapixelback.dto.DtoMapper;
 import com.example.mapixelback.dto.MapFullDto;
 import com.example.mapixelback.exception.InvalidDataException;
-import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.model.Field;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;
@@ -29,6 +29,7 @@ public class MapController {
     private FieldService fieldService;
     @Autowired
     private UserService userService;
+    private final DtoMapper dtoMapper = new DtoMapper();
     private static final Logger logger = LoggerFactory.getLogger(MapController.class);
     @PostMapping
     public ResponseEntity<Map> createMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
@@ -47,10 +48,7 @@ public class MapController {
     public ResponseEntity<Map> getMapById(@PathVariable String id) {
         logger.info("incoming GET request at /maps/{id}");
         Map mapFound = mapService.findMapById(id);
-        if(mapFound != null){
-            return new ResponseEntity<>(mapFound, HttpStatus.OK);
-        }
-        throw new ResourceNotFoundException("Map with this id doesn't exist");
+        return new ResponseEntity<>(mapFound, HttpStatus.OK);
     }
     @GetMapping
     public ResponseEntity<List<Map>> getAllMaps() {
@@ -61,49 +59,34 @@ public class MapController {
     public ResponseEntity<String> deleteMapById(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
         logger.info("incoming DELETE request at /maps/{id}");
         Map foundMap = mapService.findMapById(id);
-        if(foundMap!=null && userService.findUserById(foundMap.getUserId())!=null) {
-            User owner = userService.findUserById(foundMap.getUserId());
-            if(owner!=null && userService.verifyUserAccess(token, owner)){
-                boolean isDeleted = mapService.deleteMapById(id);
-                if(isDeleted){
-                    return new ResponseEntity<>(HttpStatus.OK);
-                }
-                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        User owner = userService.findUserById(foundMap.getUserId());
+        if(userService.verifyUserAccess(token, owner)){
+            boolean isDeleted = mapService.deleteMapById(id);
+            if(isDeleted){
+                return new ResponseEntity<>(HttpStatus.OK);
             }
         }
-        throw new ResourceNotFoundException("Cannot delete - the following map doesn't exist");
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
     @GetMapping("/{id}/with-fields")
     public ResponseEntity<MapFullDto> getMapFullInfo(@PathVariable String id){
         logger.info("incoming GET request at /maps/{id}/with-fields");
         Map foundMap = mapService.findMapById(id);
-        if(foundMap != null){
-            List<Field> mappedFields = foundMap.getFields().stream().map(elementId -> fieldService.findFieldById(elementId)).toList();
-            MapFullDto mapDto = new MapFullDto();
-            mapDto.setId(foundMap.getId());
-            mapDto.setName(foundMap.getName());
-            mapDto.setUserId(foundMap.getUserId());
-            mapDto.setDimensionX(foundMap.getDimensionX());
-            mapDto.setDimensionY(foundMap.getDimensionY());
-            mapDto.setFields(mappedFields);
-            return new ResponseEntity<>(mapDto, HttpStatus.OK);
-        }
-        throw new ResourceNotFoundException("Map with this id doesn't exist");
+        List<Field> mappedFields = foundMap.getFields().stream().map(elementId -> fieldService.findFieldById(elementId)).toList();
+        return new ResponseEntity<>(dtoMapper.mapToMapFullDto(foundMap, mappedFields), HttpStatus.OK);
     }
     @PutMapping
     public ResponseEntity<Map> updateMap(@RequestBody Map map, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
         logger.info("incoming PUT request at /maps");
-        if(map.getUserId()!=null){
             User owner = userService.findUserById(map.getUserId());
-            if(owner!=null && userService.verifyUserAccess(token, owner)){
+            if(userService.verifyUserAccess(token, owner)){
                 Map mapFound = mapService.saveMap(map);
                 if(mapFound != null){
                     return new ResponseEntity<>(mapFound, HttpStatus.CREATED);
                 }
             }
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
-        throw new InvalidDataException("Invalid data for creating a map");
+
     }
     @GetMapping("/user/{id}")
     public ResponseEntity<List<Map>> getMapsByUserId(@PathVariable String id, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){

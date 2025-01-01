@@ -1,8 +1,7 @@
 package com.example.mapixelback.services;
 
-import com.example.mapixelback.dto.DtoMapper;
-import com.example.mapixelback.dto.UserSummaryWithMapsDto;
 import com.example.mapixelback.exception.InvalidDataException;
+import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
 import com.example.mapixelback.model.Map;
 import com.example.mapixelback.model.User;
@@ -28,10 +27,11 @@ public class UserService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private JwtUtil jwtUtil;
-    private final DtoMapper dtoMapper = new DtoMapper();
-
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
     public User createUser(User user){
+        if(user.getEmail()==null){
+            throw new InvalidDataException("Email is required");
+        }
         User userFromDb = findUserByEmail(user.getEmail());
         if(userFromDb!=null){
             throw new InvalidDataException("User with that email already exists");
@@ -58,17 +58,21 @@ public class UserService {
         mongoTemplate.save(user);
     }
     public User findUserById(String id) {
+        User user = mongoTemplate.findById(id, User.class);
+        if(user==null) throw new ResourceNotFoundException("user with following id doesn't exist");
         return mongoTemplate.findById(id, User.class);
     }
     public User authorizeUser(String email, String password){
         User userFound = findUserByEmail(email);
-        if(userFound != null && encoder.matches(password, userFound.getPassword())){
+        if(encoder.matches(password, userFound.getPassword())){
             return userFound;
         }
-        return null;
+        throw new InvalidDataException("Invalid credentials");
     }
     public User findUserByEmail(String email){
         Query query = new Query(Criteria.where("email").is(email));
+        User user = mongoTemplate.findOne(query, User.class);
+        if(user==null) throw new ResourceNotFoundException("user with following email doesn't exist");
         return mongoTemplate.findOne(query, User.class);
     }
     public java.util.Map<String, Object> findAllUsers(String token, int page, int size) {
@@ -81,6 +85,7 @@ public class UserService {
 
         List<User> users = mongoTemplate.find(query, User.class);
         java.util.Map<String, Object> response = new HashMap<>();
+
         response.put("content", users);
         response.put("totalElements", totalUsers);
         response.put("totalPages", (int) Math.ceil((double) totalUsers / size));

@@ -47,8 +47,8 @@ public class JwtUtil {
             return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
         }
         catch (Exception exception){
-            logger.warn("Przedstawiono przeterminowany lub zfałszowany token");
-            throw new InvalidDataException("Przedstawiono przeterminowany lub zfałszowany token");
+            logger.warn("Przedstawiono przeterminowany lub sfałszowany token");
+            throw new InvalidDataException("Przedstawiono przeterminowany lub sfałszowany token");
         }
     }
 

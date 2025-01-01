@@ -1,8 +1,8 @@
 package com.example.mapixelback.services;
 
 import com.example.mapixelback.exception.InvalidDataException;
+import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.model.Field;
-import com.example.mapixelback.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -31,6 +31,8 @@ public class FieldService {
             throw new InvalidDataException("Podaj wszystkie potrzebne dane");
     }
     public Field findFieldById(String id) {
+        Field foundField = mongoTemplate.findById(id, Field.class);
+        if(foundField == null) throw new ResourceNotFoundException("Field with following id doesn't exist");
         return mongoTemplate.findById(id, Field.class);
     }
     public List<Field> findAllFields() {
