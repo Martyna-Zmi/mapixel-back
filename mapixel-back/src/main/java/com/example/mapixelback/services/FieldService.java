@@ -22,7 +22,7 @@ public class FieldService {
             if(field.getCategory()!=null && field.getName()!=null && field.getImgSrc()!=null){
                 if(Objects.equals(field.getCategory(), "terrain") ||
                         Objects.equals(field.getCategory(), "obstacle") ||
-                        Objects.equals(field.getCategory(), "thing") ||
+                        Objects.equals(field.getCategory(), "gameplay") ||
                         Objects.equals(field.getCategory(), "animal")){
                     return mongoTemplate.save(field);
                 }

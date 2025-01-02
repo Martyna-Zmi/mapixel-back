@@ -32,7 +32,14 @@ public class UserService {
         if(user.getEmail()==null){
             throw new InvalidDataException("Email is required");
         }
-        User userFromDb = findUserByEmail(user.getEmail());
+        User userFromDb = null;
+        try{
+            userFromDb = findUserByEmail(user.getEmail());
+        }
+        catch (ResourceNotFoundException ignored){
+
+        }
+
         if(userFromDb!=null){
             throw new InvalidDataException("User with that email already exists");
         }
