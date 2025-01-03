@@ -52,6 +52,14 @@ public class UserController {
 
         return new ResponseEntity<>(tokenResponse, HttpStatus.CREATED);
     }
+    @PutMapping("/password")
+    public ResponseEntity<Object> updatePassword(@RequestBody PasswordDto passwordDto, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        logger.info("incoming PUT request at /users/password");
+        if(userService.changePassword(token, passwordDto)){
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
     @GetMapping("/extract")
     public ResponseEntity<Map<String, String>> userIdFromToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
         User user = userService.findUserByEmail(jwtUtil.extractUsernameFromToken(token.replace("Bearer ", "")));

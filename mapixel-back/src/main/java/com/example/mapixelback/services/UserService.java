@@ -1,5 +1,6 @@
 package com.example.mapixelback.services;
 
+import com.example.mapixelback.dto.PasswordDto;
 import com.example.mapixelback.exception.InvalidDataException;
 import com.example.mapixelback.exception.ResourceNotFoundException;
 import com.example.mapixelback.jwt.JwtUtil;
@@ -99,7 +100,16 @@ public class UserService {
         response.put("currentPage", page);
 
         return response;
-}
+    }
+    public boolean changePassword(String token, PasswordDto passwordDto){
+        if(passwordDto.getPassword() == null || !passwordDto.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,40}$")){
+            throw new InvalidDataException("new password is requred and needs to follow the criteria");
+        }
+        User userFromDb =  findUserByEmail(jwtUtil.extractUsernameFromToken(token.replace("Bearer ", "")));
+        userFromDb.setPassword(encoder.encode(passwordDto.getPassword()));
+        mongoTemplate.save(userFromDb);
+        return true;
+    }
     public List<User> findUsersByUsername(String username) {
         Query query = new Query(Criteria.where("username").regex(".*" + username + ".*", "i"));
         return mongoTemplate.find(query, User.class);
