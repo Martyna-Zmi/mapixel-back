@@ -1,5 +1,7 @@
 # Back-end side of an map editor application
 
+The repository with Frontend is [here](https://github.com/Martyna-Zmi/mapixel-front)
+
 ## Tech stack
 * Java
 * Spring Boot
