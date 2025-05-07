@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +17,6 @@ class DtoMapperTest {
     private final Map map = new Map("123", "world", "456", 10, 10, new ArrayList<>());
     @BeforeEach
     void setup(){
-
         exampleMapFullDto.setId("123");
         exampleMapFullDto.setName("world");
         exampleMapFullDto.setDimensionX(10);
